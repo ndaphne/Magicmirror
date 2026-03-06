@@ -7,6 +7,13 @@
  * see https://docs.magicmirror.builders/getting-started/configuration.html#general
  * and https://docs.magicmirror.builders/modules/configuration.html
  */
+let localSecrets = {};
+try {
+	localSecrets = require("./config.secrets.js");
+} catch (error) {
+	localSecrets = {};
+}
+
 let config = {
 	address: "localhost", 	// Address to listen on, can be:
 							// - "localhost", "127.0.0.1", "::1" to listen on loopback interface
@@ -66,7 +73,7 @@ let config = {
 						header: 'Todoist', // This is optional
 						config: { // See 'Configuration options' for more information.
 							hideWhenEmpty: false,
-							accessToken: process.env.MM_TODOIST_TOKEN || "REPLACE_ME_TODOIST_TOKEN",
+							accessToken: process.env.MM_TODOIST_TOKEN || localSecrets.MM_TODOIST_TOKEN || "REPLACE_ME_TODOIST_TOKEN",
 							maximumEntries: 60,
 							updateInterval: 60*1000, // Update every 10 minutes
 							fade: false,      
@@ -79,7 +86,7 @@ let config = {
 			module:		'MMM-AirNow',
 				position:	'top_right',
 				config:		{
-					api_key:	process.env.MM_AIRNOW_API_KEY || "REPLACE_ME_AIRNOW_API_KEY",
+					api_key:	process.env.MM_AIRNOW_API_KEY || localSecrets.MM_AIRNOW_API_KEY || "REPLACE_ME_AIRNOW_API_KEY",
 					zip_code:	'89423'
         }
 		},
@@ -100,7 +107,7 @@ let config = {
 				type: "current",
 				location: "Johnson Lane",
 				locationID: "5506353", //ID from http://bulk.openweathermap.org/sample/city.list.json.gz; unzip the gz file and find your city
-				apiKey: process.env.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
+				apiKey: process.env.MM_OPENWEATHER_API_KEY || localSecrets.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
 	}
 	},	
 		{
@@ -112,7 +119,7 @@ let config = {
 				type: "forecast",
 				location: "Johnson Lane",
 				locationID: "5506353", //ID from http://bulk.openweathermap.org/sample/city.list.json.gz; unzip the gz file and find your city
-				apiKey: process.env.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
+				apiKey: process.env.MM_OPENWEATHER_API_KEY || localSecrets.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
 			}
 		},
 		{
