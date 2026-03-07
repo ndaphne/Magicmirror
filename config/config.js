@@ -13,6 +13,7 @@ try {
 } catch (error) {
 	localSecrets = {};
 }
+const runtimeEnv = typeof process !== "undefined" && process.env ? process.env : {};
 
 let config = {
 	address: "localhost", 	// Address to listen on, can be:
@@ -49,9 +50,9 @@ let config = {
 			module: "alert",
 		},
 				{
-			module: "clock",
-			position: "top_left"
-		},
+					module: "clock",
+					position: "top_left"
+				},
 				{
 					module: "calendar",
 					header: "Google Calendar",
@@ -60,10 +61,25 @@ let config = {
 						maximumEntries: 10,
 						calendars: [
 							{
-								symbol: "calendar-check",
-								url: "https://calendar.google.com/calendar/ical/nick%40guardiannv.com/public/basic.ics"
+								name: "Primary",
+								symbol: "user",
+								url: runtimeEnv.MM_GOOGLE_CALENDAR_ICS_URL || localSecrets.MM_GOOGLE_CALENDAR_ICS_URL || "https://calendar.google.com/calendar/ical/nick%40guardiannv.com/public/basic.ics"
+							},
+							{
+								name: "Holidays",
+								symbol: "gift",
+								url: "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics"
 							}
 						]
+					}
+				},
+				{
+					module: "MMM-PregnancyTracker",
+					position: "middle_center",
+					config: {
+						conceptionDate: "2025-08-27",
+						showHeader: true,
+						header: "Pregnancy Tracker"
 					}
 				},
 				{
@@ -72,8 +88,8 @@ let config = {
 						position: 'top_center',	// This can be any of the regions. Best results in left or right regions.
 						header: 'Todoist', // This is optional
 						config: { // See 'Configuration options' for more information.
-							hideWhenEmpty: false,
-							accessToken: process.env.MM_TODOIST_TOKEN || localSecrets.MM_TODOIST_TOKEN || "REPLACE_ME_TODOIST_TOKEN",
+							hideWhenEmpty: true,
+							accessToken: runtimeEnv.MM_TODOIST_TOKEN || localSecrets.MM_TODOIST_TOKEN || "REPLACE_ME_TODOIST_TOKEN",
 							maximumEntries: 60,
 							updateInterval: 60*1000, // Update every 10 minutes
 							fade: false,      
@@ -86,7 +102,7 @@ let config = {
 			module:		'MMM-AirNow',
 				position:	'top_right',
 				config:		{
-					api_key:	process.env.MM_AIRNOW_API_KEY || localSecrets.MM_AIRNOW_API_KEY || "REPLACE_ME_AIRNOW_API_KEY",
+					api_key:	runtimeEnv.MM_AIRNOW_API_KEY || localSecrets.MM_AIRNOW_API_KEY || "REPLACE_ME_AIRNOW_API_KEY",
 					zip_code:	'89423'
         }
 		},
@@ -106,8 +122,8 @@ let config = {
 				weatherProvider: "openweathermap",
 				type: "current",
 				location: "Johnson Lane",
-				locationID: "5506353", //ID from http://bulk.openweathermap.org/sample/city.list.json.gz; unzip the gz file and find your city
-				apiKey: process.env.MM_OPENWEATHER_API_KEY || localSecrets.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
+				locationID: "5506353",
+				apiKey: runtimeEnv.MM_OPENWEATHER_API_KEY || localSecrets.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
 	}
 	},	
 		{
@@ -118,8 +134,8 @@ let config = {
 				weatherProvider: "openweathermap",
 				type: "forecast",
 				location: "Johnson Lane",
-				locationID: "5506353", //ID from http://bulk.openweathermap.org/sample/city.list.json.gz; unzip the gz file and find your city
-				apiKey: process.env.MM_OPENWEATHER_API_KEY || localSecrets.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
+				locationID: "5506353",
+				apiKey: runtimeEnv.MM_OPENWEATHER_API_KEY || localSecrets.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
 			}
 		},
 		{

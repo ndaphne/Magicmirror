@@ -11,6 +11,7 @@
 const NodeHelper = require("node_helper");
 const request = require("request");
 const showdown = require("showdown");
+const path = require("path");
 
 const markdown = new showdown.Converter();
 
@@ -29,17 +30,40 @@ module.exports = NodeHelper.create({
 	fetchTodos : function() {
 		var self = this;
 		//request.debug = true;
-		var acessCode = self.config.accessToken;
+		var accessToken = self.config.accessToken;
+		if (!accessToken || accessToken.indexOf("REPLACE_ME") === 0) {
+			accessToken = process.env.MM_TODOIST_TOKEN;
+		}
+		if ((!accessToken || accessToken.indexOf("REPLACE_ME") === 0)) {
+			try {
+				var localSecrets = require(path.resolve(__dirname, "../../config/config.secrets.js"));
+				if (localSecrets && localSecrets.MM_TODOIST_TOKEN) {
+					accessToken = localSecrets.MM_TODOIST_TOKEN;
+				}
+			} catch (error) {
+				// noop
+			}
+		}
+		if (!accessToken || accessToken.indexOf("REPLACE_ME") === 0) {
+			self.sendSocketNotification("FETCH_ERROR", {
+				error: "Todoist token missing"
+			});
+			return;
+		}
+		var requestUrl = [self.config.apiBase, self.config.apiVersion, self.config.todoistEndpoint]
+			.map(function (part) { return String(part || "").replace(/^\/+|\/+$/g, ""); })
+			.filter(function (part) { return part.length > 0; })
+			.join("/");
+		requestUrl = requestUrl.indexOf("http") === 0 ? requestUrl : "https://" + requestUrl;
 		request({
-			url: self.config.apiBase + "/" + self.config.apiVersion + "/" + self.config.todoistEndpoint + "/",
+			url: requestUrl,
 			method: "POST",
 			headers: {
-				"authorization": "Bearer " + self.config.accessToken,
+				"authorization": "Bearer " + accessToken,
 				"content-type": "application/x-www-form-urlencoded",
 				"cache-control": "no-cache"
 			},
 			form: {
-				token: self.config.accessToken,
 				sync_token: "*",
 				resource_types: self.config.todoistResourceType
 			}
@@ -60,7 +84,7 @@ module.exports = NodeHelper.create({
 					item.contentHtml = markdown.makeHtml(item.content);
 				});
 
-				taskJson.accessToken = acessCode;
+				taskJson.accessToken = self.config.accessToken;
 				self.sendSocketNotification("TASKS", taskJson);
 			}
 			else{

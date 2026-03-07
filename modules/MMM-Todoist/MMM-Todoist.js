@@ -83,8 +83,8 @@ Module.register("MMM-Todoist", {
 		},
 
 		//This has been designed to use the Todoist Sync API.
-		apiVersion: "v9",
-		apiBase: "https://api.todoist.com/sync",
+		apiVersion: "v1",
+		apiBase: "https://api.todoist.com/api",
 		todoistEndpoint: "sync",
 
 		todoistResourceType: "[\"items\", \"projects\", \"collaborators\", \"user\", \"labels\"]",
@@ -230,6 +230,14 @@ Module.register("MMM-Todoist", {
 	socketNotificationReceived: function (notification, payload) {
 		if (notification === "TASKS") {
 			this.filterTodoistData(payload);
+
+			if (this.config.hideWhenEmpty) {
+				if (this.tasks && this.tasks.items && this.tasks.items.length === 0) {
+					this.hide(0);
+				} else {
+					this.show(0);
+				}
+			}
 
 			if (this.config.displayLastUpdate) {
 				this.lastUpdate = Date.now() / 1000; //save the timestamp of the last update to be able to display it
@@ -575,7 +583,7 @@ Module.register("MMM-Todoist", {
 	},
 	getDom: function () {
 	
-		if (this.config.hideWhenEmpty && this.tasks.items.length===0) {
+		if (this.config.hideWhenEmpty && this.tasks && this.tasks.items && this.tasks.items.length===0) {
 			return null;
 		}
 	
