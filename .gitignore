@@ -57,11 +57,20 @@ Temporary Items
 .fuse_hidden*
 .directory
 .Trash-*
+__pycache__/
+*.pyc
+_incoming/
 
 # Ignore all modules except the default modules.
 /modules/**
 !/modules/default
 !/modules/default/**
+!/modules/MMM-HomeAssistantTodo
+!/modules/MMM-HomeAssistantTodo/**
+!/modules/MMM-OilPrice
+!/modules/MMM-OilPrice/**
+!/modules/MMM-IranWarCasualties
+!/modules/MMM-IranWarCasualties/**
 !/modules/README.md**
 
 # Ignore changes to the custom css files.

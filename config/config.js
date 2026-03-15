@@ -14,6 +14,7 @@ try {
 	localSecrets = {};
 }
 const runtimeEnv = typeof process !== "undefined" && process.env ? process.env : {};
+const getSetting = (key, fallback = "") => runtimeEnv[key] || localSecrets[key] || fallback;
 
 let config = {
 	address: "localhost", 	// Address to listen on, can be:
@@ -61,16 +62,44 @@ let config = {
 						maximumEntries: 10,
 						calendars: [
 							{
-								name: "Primary",
-								symbol: "user",
-								url: runtimeEnv.MM_GOOGLE_CALENDAR_ICS_URL || localSecrets.MM_GOOGLE_CALENDAR_ICS_URL || "https://calendar.google.com/calendar/ical/nick%40guardiannv.com/public/basic.ics"
+								name: getSetting("MM_GOOGLE_CALENDAR_NAME", "Nick & Amelia"),
+								symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL", "heart"),
+								url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL")
 							},
 							{
-								name: "Holidays",
-								symbol: "gift",
-								url: "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics"
+								name: getSetting("MM_GOOGLE_CALENDAR_NAME_2", "Guardian"),
+								symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL_2", "briefcase"),
+								url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL_2")
+							},
+							{
+								name: getSetting("MM_GOOGLE_CALENDAR_NAME_3", "DPI"),
+								symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL_3", "building-o"),
+								url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL_3")
+							},
+							{
+								name: getSetting("MM_GOOGLE_HOLIDAY_NAME", "Holidays"),
+								symbol: getSetting("MM_GOOGLE_HOLIDAY_SYMBOL", "gift"),
+								url: getSetting("MM_GOOGLE_HOLIDAY_ICS_URL", "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics")
 							}
-						]
+						].filter((calendar) => Boolean(calendar.url))
+					}
+				},
+				{
+					module: "MMM-HomeAssistantTodo",
+					position: "top_left",
+					header: "Alexa Shopping List",
+					config: {
+						homeAssistantUrl: runtimeEnv.MM_HOME_ASSISTANT_URL || localSecrets.MM_HOME_ASSISTANT_URL || "",
+						todoEntityId: runtimeEnv.MM_ALEXA_SHOPPING_TODO_ENTITY || localSecrets.MM_ALEXA_SHOPPING_TODO_ENTITY || "todo.shopping_list",
+						updateInterval: 60 * 1000,
+						maximumEntries: 20,
+						enablePaging: true,
+						pageSize: 10,
+						pageInterval: 10 * 1000,
+						showPageIndicator: true,
+						staleAfterMs: null,
+						hideWhenEmpty: false,
+						emptyText: "Alexa shopping list is empty."
 					}
 				},
 				{
@@ -79,31 +108,19 @@ let config = {
 					config: {
 						conceptionDate: "2025-08-27",
 						showHeader: true,
-						header: "Pregnancy Tracker"
+						header: "Pregnancy Tracker",
+						showDevelopmentalMilestones: false
 					}
 				},
-				{
-						module: 'MMM-Todoist',
-				
-						position: 'top_center',	// This can be any of the regions. Best results in left or right regions.
-						header: 'Todoist', // This is optional
-						config: { // See 'Configuration options' for more information.
-							hideWhenEmpty: true,
-							accessToken: runtimeEnv.MM_TODOIST_TOKEN || localSecrets.MM_TODOIST_TOKEN || "REPLACE_ME_TODOIST_TOKEN",
-							maximumEntries: 60,
-							updateInterval: 60*1000, // Update every 10 minutes
-							fade: false,      
-							//projects and/or labels is mandatory:
-							projects: [ 2273569270, 2273569279, 2273247739 ], 
-							labels: [ "Nick", "Bobbie" ] // Tasks for any projects with these labels will be shown.
-		}
-		},
 		{
 			module:		'MMM-AirNow',
 				position:	'top_right',
 				config:		{
 					api_key:	runtimeEnv.MM_AIRNOW_API_KEY || localSecrets.MM_AIRNOW_API_KEY || "REPLACE_ME_AIRNOW_API_KEY",
-					zip_code:	'89423'
+					zip_code:	'89423',
+					latitude:	39.048,
+					longitude:	-119.7221,
+					distance:	25
         }
 		},
 		{
@@ -119,11 +136,12 @@ let config = {
 			module: "weather",
 			position: "top_right",
 			config: {
-				weatherProvider: "openweathermap",
+				weatherProvider: "weathergov",
 				type: "current",
 				location: "Johnson Lane",
-				locationID: "5506353",
-				apiKey: runtimeEnv.MM_OPENWEATHER_API_KEY || localSecrets.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
+				showHumidity: true,
+				lat: 39.048,
+				lon: -119.7221
 	}
 	},	
 		{
@@ -131,11 +149,50 @@ let config = {
 			position: "top_right",
 			header: "Weather Forecast",
 			config: {
-				weatherProvider: "openweathermap",
+				weatherProvider: "weathergov",
 				type: "forecast",
 				location: "Johnson Lane",
-				locationID: "5506353",
-				apiKey: runtimeEnv.MM_OPENWEATHER_API_KEY || localSecrets.MM_OPENWEATHER_API_KEY || "REPLACE_ME_OPENWEATHER_API_KEY"
+				lat: 39.048,
+				lon: -119.7221
+			}
+		},
+		{
+			module: "MMM-OilPrice",
+			position: "bottom_right",
+			header: "Oil Price",
+			config: {
+				benchmark: "WTI",
+				updateInterval: 30 * 60 * 1000,
+				showChange: true,
+				showUpdated: true,
+				showObservationDate: true,
+				currencySymbol: "$",
+				showUnit: true,
+				unitText: "/bbl",
+				decimals: 2,
+				changeDecimals: 2
+			}
+		},
+		{
+			module: "MMM-IranWarCasualties",
+			position: "bottom_left",
+			header: "Iran War Casualties",
+			config: {
+				primarySourceUrl: "https://www.aljazeera.com/news/2026/3/1/us-israel-attacks-on-iran-death-toll-and-injuries-live-tracker",
+				secondarySourceUrl: "https://en.wikipedia.org/wiki/2026_Iran_war",
+				updateInterval: 10 * 60 * 1000,
+				enableCrossCheck: true,
+				mismatchAbsThreshold: 10,
+				mismatchPctThreshold: 15,
+				rowsPerPage: 4,
+				pageInterval: 8 * 1000,
+				showMismatch: true,
+				showUpdated: false,
+				showSourceLine: false,
+				showDisclaimer: false,
+				headerText: "Iran War Casualties",
+				staleAfterMs: null,
+				unavailableText: "Casualty data unavailable."
 			}
 		},
 		{

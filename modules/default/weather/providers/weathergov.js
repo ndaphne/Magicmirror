@@ -29,6 +29,11 @@ WeatherProvider.register("weathergov", {
 
 	// Flag all needed URLs availability
 	configURLs: false,
+	maxConsecutiveBadCurrentWeather: 5,
+	consecutiveBadCurrentWeather: 0,
+	lastGoodCurrentWeather: null,
+	consecutiveBadHumidity: 0,
+	lastGoodHumidity: null,
 
 	//This API has multiple urls involved
 	forecastURL: "tbd",
@@ -62,16 +67,72 @@ WeatherProvider.register("weathergov", {
 		this.fetchData(this.stationObsURL)
 			.then((data) => {
 				if (!data || !data.properties) {
-					// Did not receive usable new data.
+					this.setCurrentWeatherWithFallback(null);
 					return;
 				}
 				const currentWeather = this.generateWeatherObjectFromCurrentWeather(data.properties);
-				this.setCurrentWeather(currentWeather);
+				this.setCurrentWeatherWithFallback(currentWeather);
 			})
-			.catch(function (request) {
+			.catch((request) => {
 				Log.error("Could not load station obs data ... ", request);
+				this.setCurrentWeatherWithFallback(null);
 			})
 			.finally(() => this.updateAvailable());
+	},
+
+	setCurrentWeatherWithFallback(currentWeather) {
+		if (this.isCurrentWeatherValid(currentWeather)) {
+			this.applyHumidityFallback(currentWeather);
+			this.consecutiveBadCurrentWeather = 0;
+			this.lastGoodCurrentWeather = currentWeather;
+			this.setCurrentWeather(currentWeather);
+			return;
+		}
+
+		this.consecutiveBadCurrentWeather += 1;
+
+		if (this.lastGoodCurrentWeather && this.consecutiveBadCurrentWeather <= this.maxConsecutiveBadCurrentWeather) {
+			this.setCurrentWeather(this.lastGoodCurrentWeather);
+			return;
+		}
+
+		this.setCurrentWeather(this.createUnavailableCurrentWeather());
+	},
+
+	applyHumidityFallback(currentWeather) {
+		const humidityIsValid = Number.isFinite(currentWeather.humidity);
+		if (humidityIsValid) {
+			this.consecutiveBadHumidity = 0;
+			this.lastGoodHumidity = currentWeather.humidity;
+			return;
+		}
+
+		this.consecutiveBadHumidity += 1;
+
+		if (Number.isFinite(this.lastGoodHumidity) && this.consecutiveBadHumidity <= this.maxConsecutiveBadCurrentWeather) {
+			currentWeather.humidity = this.lastGoodHumidity;
+			return;
+		}
+
+		currentWeather.humidity = "--";
+	},
+
+	isCurrentWeatherValid(currentWeather) {
+		return Boolean(currentWeather && Number.isFinite(currentWeather.temperature));
+	},
+
+	createUnavailableCurrentWeather() {
+		const unavailableWeather = new WeatherObject(this.config.units, this.config.tempUnits, this.config.windUnits, this.config.useKmh);
+		unavailableWeather.date = moment();
+		unavailableWeather.updateSunTime(this.config.lat, this.config.lon);
+		unavailableWeather.temperature = "--";
+		unavailableWeather.feelsLikeTemp = "--";
+		unavailableWeather.weatherType = this.lastGoodCurrentWeather ? this.lastGoodCurrentWeather.weatherType : this.convertWeatherType("", unavailableWeather.isDayTime());
+		unavailableWeather.windSpeed = this.lastGoodCurrentWeather ? this.lastGoodCurrentWeather.windSpeed : 0;
+		unavailableWeather.windDirection = this.lastGoodCurrentWeather ? this.lastGoodCurrentWeather.windDirection : 0;
+		unavailableWeather.humidity = "--";
+		unavailableWeather.precipitation = null;
+		return unavailableWeather;
 	},
 
 	// Overwrite the fetchWeatherForecast method.
@@ -145,18 +206,20 @@ WeatherProvider.register("weathergov", {
 	 */
 	generateWeatherObjectFromCurrentWeather(currentWeatherData) {
 		const currentWeather = new WeatherObject(this.config.units, this.config.tempUnits, this.config.windUnits, this.config.useKmh);
+		const readMetric = (metric) => (metric && typeof metric === "object" ? metric.value : null);
 
 		currentWeather.date = moment(currentWeatherData.timestamp);
-		currentWeather.temperature = this.convertTemp(currentWeatherData.temperature.value);
-		currentWeather.windSpeed = this.convertSpeed(currentWeatherData.windSpeed.value);
-		currentWeather.windDirection = currentWeatherData.windDirection.value;
-		currentWeather.minTemperature = this.convertTemp(currentWeatherData.minTemperatureLast24Hours.value);
-		currentWeather.maxTemperature = this.convertTemp(currentWeatherData.maxTemperatureLast24Hours.value);
-		currentWeather.humidity = Math.round(currentWeatherData.relativeHumidity.value);
+		currentWeather.temperature = this.convertTemp(readMetric(currentWeatherData.temperature));
+		currentWeather.windSpeed = this.convertSpeed(readMetric(currentWeatherData.windSpeed));
+		currentWeather.windDirection = readMetric(currentWeatherData.windDirection);
+		currentWeather.minTemperature = this.convertTemp(readMetric(currentWeatherData.minTemperatureLast24Hours));
+		currentWeather.maxTemperature = this.convertTemp(readMetric(currentWeatherData.maxTemperatureLast24Hours));
+		const humidity = readMetric(currentWeatherData.relativeHumidity);
+		currentWeather.humidity = humidity === null ? null : Math.round(humidity);
 		currentWeather.rain = null;
 		currentWeather.snow = null;
-		currentWeather.precipitation = this.convertLength(currentWeatherData.precipitationLastHour.value);
-		currentWeather.feelsLikeTemp = this.convertTemp(currentWeatherData.heatIndex.value);
+		currentWeather.precipitation = this.convertLength(readMetric(currentWeatherData.precipitationLastHour));
+		currentWeather.feelsLikeTemp = this.convertTemp(readMetric(currentWeatherData.heatIndex));
 
 		// determine the sunrise/sunset times - not supplied in weather.gov data
 		currentWeather.updateSunTime(this.config.lat, this.config.lon);
@@ -238,6 +301,9 @@ WeatherProvider.register("weathergov", {
 	 */
 	// conversion to fahrenheit
 	convertTemp(temp) {
+		if (temp === null || temp === undefined || isNaN(temp)) {
+			return null;
+		}
 		if (this.config.tempUnits === "imperial") {
 			return (9 / 5) * temp + 32;
 		} else {
@@ -246,6 +312,9 @@ WeatherProvider.register("weathergov", {
 	},
 	// conversion to mph or kmh
 	convertSpeed(metSec) {
+		if (metSec === null || metSec === undefined || isNaN(metSec)) {
+			return null;
+		}
 		if (this.config.windUnits === "imperial") {
 			return metSec * 2.23694;
 		} else {
@@ -258,6 +327,9 @@ WeatherProvider.register("weathergov", {
 	},
 	// conversion to inches
 	convertLength(meters) {
+		if (meters === null || meters === undefined || isNaN(meters)) {
+			return null;
+		}
 		if (this.config.units === "imperial") {
 			return meters * 39.3701;
 		} else {
@@ -269,6 +341,9 @@ WeatherProvider.register("weathergov", {
 	 * Convert the icons to a more usable name.
 	 */
 	convertWeatherType(weatherType, isDaytime) {
+		if (!weatherType || typeof weatherType !== "string") {
+			return isDaytime ? "day-sunny" : "night-clear";
+		}
 		//https://w1.weather.gov/xml/current_obs/weather.php
 		// There are way too many types to create, so lets just look for certain strings
 

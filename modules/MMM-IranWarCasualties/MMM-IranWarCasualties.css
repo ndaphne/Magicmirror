@@ -1,0 +1,51 @@
+.MMM-IranWarCasualties .iwc-wrapper {
+	max-width: 360px;
+}
+
+.MMM-IranWarCasualties .iwc-table-header {
+	letter-spacing: 0.03em;
+	margin-bottom: 4px;
+	opacity: 0.8;
+}
+
+.MMM-IranWarCasualties .iwc-list {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.MMM-IranWarCasualties .iwc-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto 14px;
+	align-items: baseline;
+	column-gap: 8px;
+	line-height: 1.25;
+}
+
+.MMM-IranWarCasualties .iwc-country {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.MMM-IranWarCasualties .iwc-deaths {
+	text-align: right;
+	min-width: 52px;
+}
+
+.MMM-IranWarCasualties .iwc-mismatch {
+	text-align: center;
+	color: #ff7676;
+	font-weight: 700;
+}
+
+.MMM-IranWarCasualties .iwc-footer {
+	margin-top: 6px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.MMM-IranWarCasualties .iwc-warning {
+	color: #ff9d9d;
+}

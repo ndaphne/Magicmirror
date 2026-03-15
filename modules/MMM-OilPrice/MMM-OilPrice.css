@@ -1,0 +1,61 @@
+.MMM-OilPrice .oil-price-wrapper {
+	min-width: 220px;
+	max-width: 320px;
+}
+
+.MMM-OilPrice .oil-quote {
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.MMM-OilPrice .oil-quote:last-child {
+	margin-bottom: 6px;
+}
+
+.MMM-OilPrice .oil-benchmark {
+	font-size: 20px;
+	letter-spacing: 0.02em;
+	line-height: 1.1;
+}
+
+.MMM-OilPrice .oil-price-line {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	margin-top: 2px;
+}
+
+.MMM-OilPrice .oil-price-value {
+	font-size: 40px;
+	line-height: 1.05;
+	font-weight: 500;
+}
+
+.MMM-OilPrice .oil-unit {
+	font-size: 16px;
+}
+
+.MMM-OilPrice .oil-change {
+	margin-top: 2px;
+}
+
+.MMM-OilPrice .oil-change.positive {
+	color: #8bd98b;
+}
+
+.MMM-OilPrice .oil-change.negative {
+	color: #ff8f8f;
+}
+
+.MMM-OilPrice .oil-change.flat {
+	color: #d0d0d0;
+}
+
+.MMM-OilPrice .oil-meta {
+	margin-top: 2px;
+}
+
+.MMM-OilPrice .oil-status {
+	margin-top: 3px;
+}

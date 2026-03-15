@@ -23,8 +23,8 @@
                     </sup>
                 {% endif %}
             </span>
-            {% if config.showHumidity and current.humidity %}
-                <span>{{ current.humidity | decimalSymbol }}</span><sup>&nbsp;<i class="wi wi-humidity humidityIcon"></i></sup>
+            {% if config.showHumidity %}
+                <span>H {{ current.humidity | unit("humidity") | decimalSymbol }}</span><sup>&nbsp;<i class="wi wi-humidity humidityIcon"></i></sup>
             {% endif %}
             {% if config.showSun %}
                 <span class="wi dimmed wi-{{ current.nextSunAction() }}"></span>

@@ -180,8 +180,12 @@ Module.register("weather", {
 	},
 
 	roundValue: function (temperature) {
+		const numericTemperature = Number.parseFloat(temperature);
+		if (!Number.isFinite(numericTemperature)) {
+			return "--";
+		}
 		const decimals = this.config.roundTemp ? 0 : 1;
-		const roundValue = parseFloat(temperature).toFixed(decimals);
+		const roundValue = numericTemperature.toFixed(decimals);
 		return roundValue === "-0" ? 0 : roundValue;
 	},
 
@@ -210,6 +214,16 @@ Module.register("weather", {
 		this.nunjucksEnvironment().addFilter(
 			"unit",
 			function (value, type) {
+				if (value === null || value === undefined) {
+					return "--";
+				}
+				if (typeof value === "number" && Number.isNaN(value)) {
+					return "--";
+				}
+				if (value === "--") {
+					return "--";
+				}
+
 				if (type === "temperature") {
 					if (this.config.tempUnits === "metric" || this.config.tempUnits === "imperial") {
 						value += "°";

@@ -1,0 +1,58 @@
+.ha-todo-list {
+	width: 100%;
+}
+
+.ha-todo-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+
+.ha-todo-marker {
+	min-width: 12px;
+	color: #7cc4fa;
+	text-align: center;
+	line-height: 1.35;
+	padding-top: 1px;
+}
+
+.ha-todo-content {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.ha-todo-summary {
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	max-height: 2.7em;
+}
+
+.ha-todo-meta {
+	line-height: 1.2;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.ha-todo-footer {
+	margin-top: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.ha-todo-updated {
+	margin-top: 0;
+}
+
+.ha-todo-stale {
+	color: #f0a67a;
+}
