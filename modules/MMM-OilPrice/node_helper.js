@@ -4,16 +4,22 @@ const https = require("https");
 const { execFile } = require("child_process");
 const NodeHelper = require("node_helper");
 
-const FRED_SERIES = {
+const BENCHMARKS = {
 	WTI: {
 		label: "WTI Crude",
-		seriesId: "DCOILWTICO"
+		fredSeriesId: "DCOILWTICO",
+		stooqSymbol: "CL.F"
 	},
 	BRENT: {
 		label: "Brent Crude",
-		seriesId: "DCOILBRENTEU"
+		fredSeriesId: "DCOILBRENTEU",
+		stooqSymbol: "CB.F"
 	}
 };
+
+const SOURCE_AUTO = "auto";
+const SOURCE_FRED = "fred";
+const SOURCE_STOOQ = "stooq";
 
 const REQUEST_TIMEOUT_MS = 20000;
 const MAX_RETRIES = 2;
@@ -53,10 +59,23 @@ module.exports = NodeHelper.create({
 		});
 	},
 
+	resolveDataSource: function (config) {
+		var value = String(config.dataSource || SOURCE_AUTO).trim().toLowerCase();
+		if (value === SOURCE_FRED || value === SOURCE_STOOQ) {
+			return value;
+		}
+		return SOURCE_AUTO;
+	},
+
 	getFredCsvUrl: function (seriesId) {
 		var recentStart = new Date(Date.now() - (45 * 24 * 60 * 60 * 1000));
 		var recentDate = recentStart.toISOString().slice(0, 10);
 		return "https://fred.stlouisfed.org/graph/fredgraph.csv?id=" + seriesId + "&cosd=" + recentDate;
+	},
+
+	getStooqCsvUrl: function (symbol) {
+		var normalized = String(symbol || "").trim().toLowerCase();
+		return "https://stooq.com/q/l/?s=" + normalized + "&f=sd2t2ohlcp&h&e=csv";
 	},
 
 	fetchText: function (url) {
@@ -216,7 +235,7 @@ module.exports = NodeHelper.create({
 		return points;
 	},
 
-	buildQuote: function (benchmark, points) {
+	buildQuote: function (benchmark, points, source) {
 		if (!Array.isArray(points) || points.length === 0) {
 			throw new Error("No usable data points");
 		}
@@ -235,30 +254,138 @@ module.exports = NodeHelper.create({
 
 		return {
 			benchmark: benchmark,
-			label: FRED_SERIES[benchmark].label,
-			seriesId: FRED_SERIES[benchmark].seriesId,
+			label: BENCHMARKS[benchmark].label,
+			seriesId: BENCHMARKS[benchmark].fredSeriesId,
 			price: latest.value,
 			observationDate: latest.date,
 			change: change,
-			changePercent: changePercent
+			changePercent: changePercent,
+			source: source || SOURCE_FRED
 		};
 	},
 
-	fetchBenchmarkQuote: async function (benchmark) {
-		if (!FRED_SERIES[benchmark]) {
+	normalizeIsoDate: function (value) {
+		var text = String(value || "").trim();
+		if (!text || text.toUpperCase() === "N/D") {
+			return "";
+		}
+		if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+			return text;
+		}
+		if (/^\d{8}$/.test(text)) {
+			return text.slice(0, 4) + "-" + text.slice(4, 6) + "-" + text.slice(6, 8);
+		}
+		return "";
+	},
+
+	parseStooqCsvRow: function (csvText) {
+		if (!csvText) {
+			throw new Error("Stooq returned empty response");
+		}
+
+		var lines = csvText.trim().split(/\r?\n/);
+		if (lines.length < 2) {
+			throw new Error("Stooq returned no data rows");
+		}
+
+		var headers = lines[0].split(",").map(function (header) {
+			return String(header || "").trim().toLowerCase();
+		});
+		var values = lines[1].split(",");
+
+		var row = {};
+		for (var i = 0; i < headers.length; i += 1) {
+			row[headers[i]] = String(values[i] || "").trim();
+		}
+
+		return row;
+	},
+
+	buildQuoteFromStooq: function (benchmark, row) {
+		var close = Number.parseFloat(row.close);
+		if (!Number.isFinite(close)) {
+			throw new Error("Stooq close price missing");
+		}
+
+		var previous = Number.parseFloat(row.prev);
+		var change = null;
+		var changePercent = null;
+		if (Number.isFinite(previous)) {
+			change = close - previous;
+			if (previous !== 0) {
+				changePercent = (change / previous) * 100;
+			}
+		}
+
+		var observationDate = this.normalizeIsoDate(row.date);
+		if (!observationDate) {
+			throw new Error("Stooq date missing");
+		}
+
+		return {
+			benchmark: benchmark,
+			label: BENCHMARKS[benchmark].label,
+			seriesId: BENCHMARKS[benchmark].fredSeriesId,
+			price: close,
+			observationDate: observationDate,
+			change: change,
+			changePercent: changePercent,
+			source: SOURCE_STOOQ
+		};
+	},
+
+	fetchBenchmarkFromFred: async function (benchmark) {
+		var benchmarkConfig = BENCHMARKS[benchmark];
+		if (!benchmarkConfig) {
 			throw new Error("Unsupported benchmark: " + benchmark);
 		}
 
-		var csvText = await this.fetchTextWithRetry(this.getFredCsvUrl(FRED_SERIES[benchmark].seriesId));
+		var csvText = await this.fetchTextWithRetry(this.getFredCsvUrl(benchmarkConfig.fredSeriesId));
 		var points = this.parseFredCsv(csvText);
-		return this.buildQuote(benchmark, points);
+		return this.buildQuote(benchmark, points, SOURCE_FRED);
+	},
+
+	fetchBenchmarkFromStooq: async function (benchmark) {
+		var benchmarkConfig = BENCHMARKS[benchmark];
+		if (!benchmarkConfig) {
+			throw new Error("Unsupported benchmark: " + benchmark);
+		}
+
+		var csvText = await this.fetchTextWithRetry(this.getStooqCsvUrl(benchmarkConfig.stooqSymbol));
+		var row = this.parseStooqCsvRow(csvText);
+		return this.buildQuoteFromStooq(benchmark, row);
+	},
+
+	fetchBenchmarkQuote: async function (benchmark, source) {
+		if (source === SOURCE_FRED) {
+			return this.fetchBenchmarkFromFred(benchmark);
+		}
+		if (source === SOURCE_STOOQ) {
+			return this.fetchBenchmarkFromStooq(benchmark);
+		}
+
+		// Auto mode: prefer Stooq for fresher futures quotes, then fall back to FRED spot prices.
+		try {
+			return await this.fetchBenchmarkFromStooq(benchmark);
+		} catch (stooqError) {
+			try {
+				var fredQuote = await this.fetchBenchmarkFromFred(benchmark);
+				fredQuote.warning = "Stooq failed: " + stooqError.message + ". Using FRED fallback.";
+				return fredQuote;
+			} catch (fredError) {
+				throw new Error(
+					"Stooq failed: " + stooqError.message + " | FRED failed: " + fredError.message
+				);
+			}
+		}
 	},
 
 	fetchOilPrice: async function (config) {
 		var benchmarks = this.resolveBenchmarks(config);
+		var dataSource = this.resolveDataSource(config);
 		var identifier = config.identifier;
 		var results = await Promise.allSettled(
-			benchmarks.map((benchmark) => this.fetchBenchmarkQuote(benchmark))
+			benchmarks.map((benchmark) => this.fetchBenchmarkQuote(benchmark, dataSource))
 		);
 
 		var quotes = {};
@@ -271,6 +398,9 @@ module.exports = NodeHelper.create({
 			if (result.status === "fulfilled") {
 				quotes[benchmark] = result.value;
 				this.lastGoodQuotes[benchmark] = result.value;
+				if (result.value.warning) {
+					errors.push(benchmark + ": " + result.value.warning);
+				}
 			} else {
 				errors.push(benchmark + ": " + result.reason.message);
 			}
@@ -311,7 +441,7 @@ module.exports = NodeHelper.create({
 		console.log(
 			"MMM-OilPrice fetched: " +
 			Object.keys(quotes)
-				.map((key) => key + " " + quotes[key].price)
+				.map((key) => key + " " + quotes[key].price + " (" + quotes[key].source + ")")
 				.join(", ")
 		);
 	}

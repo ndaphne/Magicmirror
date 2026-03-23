@@ -4,6 +4,7 @@ Module.register("MMM-OilPrice", {
 	defaults: {
 		benchmark: "WTI", // WTI, Brent, both
 		benchmarks: null, // Optional array override, e.g. ["WTI", "BRENT"]
+		dataSource: "auto", // auto, stooq, fred
 		updateInterval: 30 * 60 * 1000,
 		animationSpeed: 1000,
 		headerText: "",
@@ -126,7 +127,8 @@ Module.register("MMM-OilPrice", {
 	fetchOilPrices: function () {
 		this.sendSocketNotification("FETCH_OIL_PRICE", {
 			identifier: this.identifier,
-			benchmarks: this.selectedBenchmarks
+			benchmarks: this.selectedBenchmarks,
+			dataSource: this.config.dataSource
 		});
 	},
 

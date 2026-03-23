@@ -10,12 +10,12 @@ Simple MagicMirror module to show crude oil price per barrel.
 
 ## Data source
 
-This module uses **FRED (Federal Reserve Economic Data)** CSV endpoints:
+By default, this module runs in `dataSource: "auto"` mode:
 
-- WTI: `DCOILWTICO`
-- Brent: `DCOILBRENTEU`
+- Primary: **Stooq** futures quotes (`CL.F` for WTI, `CB.F` for Brent)
+- Fallback: **FRED** daily spot series (`DCOILWTICO`, `DCOILBRENTEU`)
 
-No API key is required.
+No API key is required for either source.
 
 ## Installation
 
@@ -39,6 +39,7 @@ Add this to `config/config.js` in the `modules: []` array:
 	header: "Oil Price",
 	config: {
 		benchmark: "WTI", // "WTI", "Brent", or "both"
+		dataSource: "auto", // "auto", "stooq", or "fred"
 		updateInterval: 30 * 60 * 1000,
 		showChange: true,
 		showUpdated: true,
@@ -68,11 +69,12 @@ config: {
 |---|---|---|---|
 | `benchmark` | `string` | `"WTI"` | `"WTI"`, `"Brent"`, or `"both"` |
 | `benchmarks` | `string[]` | `null` | Optional advanced override, e.g. `["WTI", "BRENT"]` |
+| `dataSource` | `string` | `"auto"` | `"auto"` (Stooq then FRED fallback), `"stooq"`, or `"fred"` |
 | `updateInterval` | `number` | `1800000` | Refresh interval in ms |
 | `headerText` | `string` | `""` | Optional header override |
 | `showChange` | `boolean` | `true` | Show daily change and direction |
 | `showUpdated` | `boolean` | `true` | Show local update time |
-| `showObservationDate` | `boolean` | `true` | Show FRED observation date |
+| `showObservationDate` | `boolean` | `true` | Show source observation date |
 | `currencySymbol` | `string` | `"$"` | Price prefix |
 | `showUnit` | `boolean` | `true` | Show unit text |
 | `unitText` | `string` | `"/bbl"` | Unit suffix |
@@ -84,6 +86,6 @@ config: {
 
 ## Notes / limitations
 
-- FRED oil series are typically daily business-day values, not tick-level live market quotes.
+- Stooq quotes are futures market data; FRED quotes are daily spot series.
 - Weekends/holidays may show the most recent available business day.
 - If a fetch fails, the module keeps the last good data and shows a warning.

@@ -36,6 +36,8 @@ Automatic sign-in capture:
 python tools\alexa_homeassistant_sync\capture_amazon_session.py
 ```
 
+Note: keep the browser open until the script confirms it could open the Alexa shopping list page and saved `config/alexa_sync/cookies.json`.
+
 One-time sync:
 
 ```powershell

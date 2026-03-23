@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 import time
+from collections import defaultdict
 
 from selenium.common.exceptions import TimeoutException
 
@@ -17,6 +18,69 @@ from common import (
 
 
 LOGGER = logging.getLogger("alexa_homeassistant_sync")
+
+
+def normalize_item_name(value):
+	"""Normalize list names to avoid mismatch on casing/spacing differences."""
+	text = str(value or "").strip()
+	if not text:
+		return ""
+	return " ".join(text.split()).casefold()
+
+
+def canonical_item_name(value):
+	text = str(value or "").strip()
+	if not text:
+		return ""
+	return " ".join(text.split())
+
+
+def build_alexa_index(items):
+	index = {}
+	for item in items:
+		name = canonical_item_name(item)
+		normalized = normalize_item_name(name)
+		if not normalized or normalized in index:
+			continue
+		index[normalized] = name
+	return index
+
+
+def build_ha_index(items):
+	index = defaultdict(list)
+	for item in items:
+		name = canonical_item_name(item.get("summary", ""))
+		normalized = normalize_item_name(name)
+		if not normalized:
+			continue
+		entry = dict(item)
+		entry["summary"] = name
+		index[normalized].append(entry)
+	return index
+
+
+def remove_ha_item_with_fallback(item):
+	summary = canonical_item_name(item.get("summary", ""))
+	uid = str(item.get("uid") or "").strip()
+
+	if uid:
+		try:
+			remove_ha_item(uid)
+			return "uid", uid
+		except Exception as uid_error:
+			if not summary:
+				raise uid_error
+			LOGGER.warning(
+				"UID removal failed for %s (%s). Falling back to summary.",
+				summary,
+				uid_error
+			)
+
+	if summary:
+		remove_ha_item(summary)
+		return "summary", summary
+
+	raise RuntimeError("Cannot remove Home Assistant item without uid or summary")
 
 
 def is_amazon_login_required(alexa):
@@ -71,28 +135,64 @@ def sync_once():
 	alexa_items = fetch_alexa_list()
 	ha_items = get_ha_list_items()
 
-	ha_by_name = {item.get("summary", ""): item for item in ha_items}
-	alexa_names = set(alexa_items)
-	ha_names = set(ha_by_name.keys())
+	alexa_index = build_alexa_index(alexa_items)
+	ha_index = build_ha_index(ha_items)
 
-	to_add = sorted(alexa_names - ha_names)
-	to_remove = sorted(ha_names - alexa_names)
+	to_add = sorted(
+		[
+			alexa_name
+			for normalized, alexa_name in alexa_index.items()
+			if normalized not in ha_index
+		],
+		key=str.casefold
+	)
 
+	to_remove = []
+	for normalized, items in ha_index.items():
+		if normalized not in alexa_index:
+			to_remove.extend(items)
+		elif len(items) > 1:
+			# Alexa source is unique; trim duplicate HA entries if present.
+			to_remove.extend(items[1:])
+
+	added = 0
+	add_errors = 0
 	for name in to_add:
-		LOGGER.info("Adding to Home Assistant: %s", name)
-		add_ha_item(name)
+		try:
+			LOGGER.info("Adding to Home Assistant: %s", name)
+			add_ha_item(name)
+			added += 1
+		except Exception:
+			add_errors += 1
+			LOGGER.exception("Failed adding Home Assistant item: %s", name)
 
-	for name in to_remove:
-		LOGGER.info("Removing from Home Assistant: %s", name)
-		remove_ha_item(name)
+	removed = 0
+	remove_errors = 0
+	for item in to_remove:
+		try:
+			removal_mode, removal_value = remove_ha_item_with_fallback(item)
+			LOGGER.info("Removing from Home Assistant (%s): %s", removal_mode, removal_value)
+			removed += 1
+		except Exception:
+			remove_errors += 1
+			LOGGER.exception(
+				"Failed removing Home Assistant item: %s",
+				item.get("summary") or item.get("uid") or "<unknown>"
+			)
 
 	LOGGER.info(
 		"Sync complete: %s Alexa items, %s HA items, %s added, %s removed",
 		len(alexa_items),
 		len(ha_items),
-		len(to_add),
-		len(to_remove)
+		added,
+		removed
 	)
+	if add_errors or remove_errors:
+		LOGGER.warning(
+			"Sync completed with %s add errors and %s remove errors",
+			add_errors,
+			remove_errors
+		)
 	LOGGER.debug("Target entity: %s", config["entity_id"])
 
 
