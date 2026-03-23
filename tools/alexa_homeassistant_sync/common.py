@@ -92,15 +92,32 @@ def get_ha_list_items(include_completed=False):
 	}
 	if not include_completed:
 		payload["status"] = ["needs_action"]
-	response = ha_request(
-		"POST",
-		"/api/services/todo/get_items",
-		payload=payload,
-		return_response=True
-	)
-	service_response = response.get("service_response", response)
-	entity_data = service_response.get(config["entity_id"], {})
-	return entity_data.get("items", [])
+	try:
+		response = ha_request(
+			"POST",
+			"/api/services/todo/get_items",
+			payload=payload,
+			return_response=True
+		)
+		service_response = response.get("service_response", response)
+		entity_data = service_response.get(config["entity_id"], {})
+		return entity_data.get("items", [])
+	except RuntimeError:
+		# Fallback for HA builds where todo/get_items via REST returns HTTP 500.
+		shopping_items = ha_request("GET", "/api/shopping_list") or []
+		if not isinstance(shopping_items, list):
+			return []
+		items = []
+		for item in shopping_items:
+			complete = bool(item.get("complete"))
+			if (not include_completed) and complete:
+				continue
+			items.append({
+				"uid": str(item.get("id", "")),
+				"summary": item.get("name", ""),
+				"status": "completed" if complete else "needs_action"
+			})
+		return items
 
 
 def add_ha_item(name):
