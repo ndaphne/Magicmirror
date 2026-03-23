@@ -71,6 +71,8 @@ _incoming/
 !/modules/MMM-OilPrice/**
 !/modules/MMM-IranWarCasualties
 !/modules/MMM-IranWarCasualties/**
+!/modules/MMM-RingLiveOverlay
+!/modules/MMM-RingLiveOverlay/**
 !/modules/README.md**
 
 # Ignore changes to the custom css files.

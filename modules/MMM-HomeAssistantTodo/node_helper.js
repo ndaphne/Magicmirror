@@ -61,6 +61,43 @@ module.exports = NodeHelper.create({
 		return [];
 	},
 
+	fetchShoppingListFallback: async function (resolvedConfig) {
+		var fallbackResponse = await fetch(
+			resolvedConfig.homeAssistantUrl + "/api/shopping_list",
+			{
+				method: "GET",
+				headers: {
+					Authorization: "Bearer " + resolvedConfig.accessToken
+				}
+			}
+		);
+
+		var fallbackText = await fallbackResponse.text();
+		if (!fallbackResponse.ok) {
+			throw new Error("Home Assistant shopping_list request failed (" + fallbackResponse.status + ")");
+		}
+
+		var fallbackJson = JSON.parse(fallbackText);
+		if (!Array.isArray(fallbackJson)) {
+			return [];
+		}
+
+		return fallbackJson
+			.filter(function (item) {
+				return resolvedConfig.includeCompleted || !item.complete;
+			})
+			.map(function (item) {
+				return {
+					uid: item.id || "",
+					summary: item.name || "",
+					status: item.complete ? "completed" : "needs_action",
+					dueDate: "",
+					dueDateTime: "",
+					description: ""
+				};
+			});
+	},
+
 	fetchTodoItems: async function (config) {
 		var resolvedConfig = this.resolveConfig(config || {});
 
@@ -102,21 +139,27 @@ module.exports = NodeHelper.create({
 			);
 			var responseText = await response.text();
 
-			if (!response.ok) {
-				throw new Error("Home Assistant request failed (" + response.status + ")");
-			}
+			var items;
 
-			var responseJson = JSON.parse(responseText);
-			var items = this.extractItems(responseJson, resolvedConfig.todoEntityId).map(item => {
-				return {
-					uid: item.uid || "",
-					summary: item.summary || item.name || "",
-					status: item.status || "needs_action",
-					dueDate: item.due_date || "",
-					dueDateTime: item.due_datetime || "",
-					description: item.description || ""
-				};
-			});
+			if (!response.ok) {
+				if (resolvedConfig.todoEntityId === "todo.shopping_list") {
+					items = await this.fetchShoppingListFallback(resolvedConfig);
+				} else {
+					throw new Error("Home Assistant request failed (" + response.status + ")");
+				}
+			} else {
+				var responseJson = JSON.parse(responseText);
+				items = this.extractItems(responseJson, resolvedConfig.todoEntityId).map(item => {
+					return {
+						uid: item.uid || "",
+						summary: item.summary || item.name || "",
+						status: item.status || "needs_action",
+						dueDate: item.due_date || "",
+						dueDateTime: item.due_datetime || "",
+						description: item.description || ""
+					};
+				});
+			}
 
 			this.sendSocketNotification("HOME_ASSISTANT_TODO_ITEMS", {
 				identifier: resolvedConfig.identifier,

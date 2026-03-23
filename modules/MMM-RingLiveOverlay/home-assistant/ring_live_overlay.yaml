@@ -1,0 +1,42 @@
+# Home Assistant package snippet for MMM-RingLiveOverlay.
+# Place this file in your Home Assistant packages directory, or copy sections
+# into configuration.yaml / automations.yaml.
+#
+# Update entity IDs below to match your Ring integration entities.
+
+rest_command:
+  mm_ring_overlay_trigger:
+    url: "http://192.168.1.100:8080/MMM-RingLiveOverlay/trigger"
+    method: POST
+    headers:
+      x-mm-ring-token: !secret mm_ring_webhook_token
+      content-type: "application/json"
+    payload: >
+      {"eventType":"{{ event_type }}"{% if stream_url is defined and stream_url|length > 0 %},"streamUrl":"{{ stream_url }}"{% endif %}{% if camera_entity_id is defined and camera_entity_id|length > 0 %},"cameraEntityId":"{{ camera_entity_id }}"{% endif %}}
+
+automation:
+  - alias: "MagicMirror Ring Ding Overlay"
+    id: "magicmirror_ring_ding_overlay"
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: event.front_door_ding
+        from: null
+    actions:
+      - action: rest_command.mm_ring_overlay_trigger
+        data:
+          event_type: ding
+          camera_entity_id: camera.front_door_live_view
+
+  - alias: "MagicMirror Ring Motion Overlay"
+    id: "magicmirror_ring_motion_overlay"
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: event.front_door_motion
+        from: null
+    actions:
+      - action: rest_command.mm_ring_overlay_trigger
+        data:
+          event_type: motion
+          camera_entity_id: camera.front_door_live_view

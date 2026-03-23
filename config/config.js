@@ -17,15 +17,15 @@ const runtimeEnv = typeof process !== "undefined" && process.env ? process.env :
 const getSetting = (key, fallback = "") => runtimeEnv[key] || localSecrets[key] || fallback;
 
 let config = {
-	address: "localhost", 	// Address to listen on, can be:
+	address: getSetting("MM_BIND_ADDRESS", "0.0.0.0"), 	// Address to listen on, can be:
 							// - "localhost", "127.0.0.1", "::1" to listen on loopback interface
 							// - another specific IPv4/6 to listen on a specific interface
 							// - "0.0.0.0", "::" to listen on any interface
 							// Default, when address config is left out or empty, is "localhost"
-	port: 8080,
+	port: Number.parseInt(getSetting("MM_PORT", "8080"), 10) || 8080,
 	basePath: "/", 	// The URL path where MagicMirror is hosted. If you are using a Reverse proxy
 					// you must set the sub path here. basePath must end with a /
-	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"], 	// Set [] to allow all IP addresses
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1", "192.168.1.244", "::ffff:192.168.1.244"], 	// Set [] to allow all IP addresses
 															// or add a specific IPv4 of 192.168.1.5 :
 															// ["127.0.0.1", "::ffff:127.0.0.1", "::1", "::ffff:192.168.1.5"],
 															// or IPv4 range of 192.168.3.0 --> 192.168.3.15 use CIDR format :
@@ -49,6 +49,19 @@ let config = {
 	modules: [
 		{
 			module: "alert",
+		},
+		{
+			module: "MMM-RingLiveOverlay",
+			position: "fullscreen_above",
+			config: {
+				homeAssistantUrl: getSetting("MM_HOME_ASSISTANT_URL"),
+				cameraEntityId: getSetting("MM_RING_CAMERA_ENTITY_ID", "camera.front_door_live_view"),
+				triggerEvents: ["ding", "motion"],
+				takeoverDurationMs: 45 * 1000,
+				audioMode: getSetting("MM_RING_AUDIO_MODE", "best-effort-unmuted"),
+				webhookPath: getSetting("MM_RING_WEBHOOK_PATH", "/MMM-RingLiveOverlay/trigger"),
+				webhookToken: getSetting("MM_RING_WEBHOOK_TOKEN")
+			}
 		},
 				{
 					module: "clock",
