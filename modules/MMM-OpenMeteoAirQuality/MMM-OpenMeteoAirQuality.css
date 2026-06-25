@@ -1,0 +1,67 @@
+.openmeteo-aq {
+	width: 100%;
+}
+
+.openmeteo-aq-summary {
+	display: flex;
+	align-items: baseline;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-bottom: 4px;
+}
+
+.openmeteo-aq-value {
+	font-size: 30px;
+	line-height: 1;
+	font-weight: 400;
+}
+
+.openmeteo-aq-label {
+	line-height: 1.2;
+	text-align: right;
+	max-width: 220px;
+}
+
+.openmeteo-aq-driver {
+	text-align: right;
+	margin-bottom: 6px;
+}
+
+.openmeteo-aq-grid {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 3px 10px;
+}
+
+.openmeteo-aq-item {
+	display: contents;
+}
+
+.openmeteo-aq-updated {
+	margin-top: 6px;
+	text-align: right;
+}
+
+.openmeteo-aq-good {
+	color: #74d67a;
+}
+
+.openmeteo-aq-moderate {
+	color: #f4d35e;
+}
+
+.openmeteo-aq-sensitive {
+	color: #f2a65a;
+}
+
+.openmeteo-aq-unhealthy {
+	color: #ee6c6c;
+}
+
+.openmeteo-aq-very-unhealthy {
+	color: #b18cff;
+}
+
+.openmeteo-aq-hazardous {
+	color: #b96b7b;
+}
