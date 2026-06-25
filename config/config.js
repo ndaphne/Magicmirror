@@ -68,30 +68,34 @@ let config = {
 			position: "top_left"
 		},
 		{
+			module: "MMM-PrivateCalendarProxy"
+		},
+		{
 			module: "calendar",
 			header: "Google Calendar",
 			position: "top_left",
 			config: {
-				maximumEntries: 10,
+				maximumEntries: 12,
 				calendars: [
 					{
-						name: getSetting("MM_GOOGLE_CALENDAR_NAME", "Nick & Amelia"),
-						symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL", "heart"),
-						url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL")
+						name: "Nick & Amelia",
+						symbol: "heart",
+						url: "http://127.0.0.1:8080/MMM-PrivateCalendarProxy/nick.ics"
 					},
 					{
-						name: getSetting("MM_GOOGLE_CALENDAR_NAME_2", "Guardian"),
-						symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL_2", "briefcase"),
-						url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL_2")
+						name: "Guardian Properties",
+						symbol: "briefcase",
+						url: "http://127.0.0.1:8080/MMM-PrivateCalendarProxy/guardian.ics"
 					},
 					{
-						name: getSetting("MM_GOOGLE_CALENDAR_NAME_3", "DPI"),
-						symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL_3", "building-o"),
-						url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL_3")
+						name: "DPI",
+						symbol: "building-o",
+						url: "http://127.0.0.1:8080/MMM-PrivateCalendarProxy/dpi.ics"
 					},
 					{
 						name: getSetting("MM_GOOGLE_HOLIDAY_NAME", "Holidays"),
 						symbol: getSetting("MM_GOOGLE_HOLIDAY_SYMBOL", "gift"),
+						maximumEntries: 3,
 						url: getSetting("MM_GOOGLE_HOLIDAY_ICS_URL", "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics")
 					}
 				].filter((calendar) => Boolean(calendar.url))
