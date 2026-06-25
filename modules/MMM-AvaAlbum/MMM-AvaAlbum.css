@@ -1,0 +1,50 @@
+.ava-album {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: min(54vw, 920px);
+	max-width: 920px;
+	min-height: 2rem;
+	margin: 0 auto;
+}
+
+.ava-album-title {
+	margin-bottom: 0.35rem;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.ava-album-frame {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: min(48vh, 620px);
+	overflow: hidden;
+}
+
+.ava-album-media {
+	display: block;
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+	border-radius: 6px;
+	box-shadow: 0 0 18px rgba(0, 0, 0, 0.55);
+}
+
+.ava-album-status {
+	max-width: 34rem;
+	text-align: center;
+}
+
+@media (max-width: 900px) {
+	.ava-album {
+		width: 72vw;
+	}
+
+	.ava-album-frame {
+		height: 42vh;
+	}
+}
