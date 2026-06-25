@@ -33,7 +33,7 @@ let config = {
 
 	useHttps: false, 		// Support HTTPS or not, default "false" will use HTTP
 	httpsPrivateKey: "", 	// HTTPS private key path, only require when useHttps is true
-	httpsCertificate: "", 	// HTTPS Certificate path, only require when useHttps is true
+	httpsCertificate: "", 	// HTTPS Certificate, only require when useHttps is true
 
 	language: "en",
 	locale: "en-US",
@@ -63,100 +63,107 @@ let config = {
 				webhookToken: getSetting("MM_RING_WEBHOOK_TOKEN")
 			}
 		},
-				{
-					module: "clock",
-					position: "top_left"
-				},
-				{
-					module: "calendar",
-					header: "Google Calendar",
-					position: "top_left",
-					config: {
-						maximumEntries: 10,
-						calendars: [
-							{
-								name: getSetting("MM_GOOGLE_CALENDAR_NAME", "Nick & Amelia"),
-								symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL", "heart"),
-								url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL")
-							},
-							{
-								name: getSetting("MM_GOOGLE_CALENDAR_NAME_2", "Guardian"),
-								symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL_2", "briefcase"),
-								url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL_2")
-							},
-							{
-								name: getSetting("MM_GOOGLE_CALENDAR_NAME_3", "DPI"),
-								symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL_3", "building-o"),
-								url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL_3")
-							},
-							{
-								name: getSetting("MM_GOOGLE_HOLIDAY_NAME", "Holidays"),
-								symbol: getSetting("MM_GOOGLE_HOLIDAY_SYMBOL", "gift"),
-								url: getSetting("MM_GOOGLE_HOLIDAY_ICS_URL", "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics")
-							}
-						].filter((calendar) => Boolean(calendar.url))
-					}
-				},
-				{
-					module: "MMM-HomeAssistantTodo",
-					position: "top_left",
-					header: "Alexa Shopping List",
-					config: {
-						homeAssistantUrl: runtimeEnv.MM_HOME_ASSISTANT_URL || localSecrets.MM_HOME_ASSISTANT_URL || "",
-						todoEntityId: runtimeEnv.MM_ALEXA_SHOPPING_TODO_ENTITY || localSecrets.MM_ALEXA_SHOPPING_TODO_ENTITY || "todo.shopping_list",
-						updateInterval: 60 * 1000,
-						maximumEntries: 20,
-						enablePaging: true,
-						pageSize: 10,
-						pageInterval: 10 * 1000,
-						showPageIndicator: true,
-						staleAfterMs: null,
-						hideWhenEmpty: false,
-						emptyText: "Alexa shopping list is empty."
-					}
-				},
-				{
-					module: "MMM-PregnancyTracker",
-					position: "middle_center",
-					config: {
-						conceptionDate: "2025-08-27",
-						showHeader: true,
-						header: "Pregnancy Tracker",
-						showDevelopmentalMilestones: false
-					}
-				},
 		{
-			module:		'MMM-AirNow',
-				position:	'top_right',
-				config:		{
-					api_key:	runtimeEnv.MM_AIRNOW_API_KEY || localSecrets.MM_AIRNOW_API_KEY || "REPLACE_ME_AIRNOW_API_KEY",
-					zip_code:	'89423',
-					latitude:	39.048,
-					longitude:	-119.7221,
-					distance:	25
-        }
+			module: "clock",
+			position: "top_left"
+		},
+		{
+			module: "calendar",
+			header: "Google Calendar",
+			position: "top_left",
+			config: {
+				maximumEntries: 10,
+				calendars: [
+					{
+						name: getSetting("MM_GOOGLE_CALENDAR_NAME", "Nick & Amelia"),
+						symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL", "heart"),
+						url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL")
+					},
+					{
+						name: getSetting("MM_GOOGLE_CALENDAR_NAME_2", "Guardian"),
+						symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL_2", "briefcase"),
+						url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL_2")
+					},
+					{
+						name: getSetting("MM_GOOGLE_CALENDAR_NAME_3", "DPI"),
+						symbol: getSetting("MM_GOOGLE_CALENDAR_SYMBOL_3", "building-o"),
+						url: getSetting("MM_GOOGLE_CALENDAR_ICS_URL_3")
+					},
+					{
+						name: getSetting("MM_GOOGLE_HOLIDAY_NAME", "Holidays"),
+						symbol: getSetting("MM_GOOGLE_HOLIDAY_SYMBOL", "gift"),
+						url: getSetting("MM_GOOGLE_HOLIDAY_ICS_URL", "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics")
+					}
+				].filter((calendar) => Boolean(calendar.url))
+			}
+		},
+		{
+			module: "MMM-HomeAssistantTodo",
+			position: "top_left",
+			header: "Alexa Shopping List",
+			config: {
+				homeAssistantUrl: runtimeEnv.MM_HOME_ASSISTANT_URL || localSecrets.MM_HOME_ASSISTANT_URL || "",
+				todoEntityId: runtimeEnv.MM_ALEXA_SHOPPING_TODO_ENTITY || localSecrets.MM_ALEXA_SHOPPING_TODO_ENTITY || "todo.shopping_list",
+				updateInterval: 60 * 1000,
+				maximumEntries: 20,
+				enablePaging: true,
+				pageSize: 10,
+				pageInterval: 10 * 1000,
+				showPageIndicator: true,
+				staleAfterMs: null,
+				hideWhenEmpty: false,
+				emptyText: "Alexa shopping list is empty."
+			}
+		},
+		{
+			module: "MMM-AvaAlbum",
+			position: "middle_center",
+			config: {
+				title: "Ava",
+				updateInterval: 15 * 60 * 1000,
+				photoDuration: 30 * 1000,
+				randomize: true,
+				showTitle: false,
+				showStatusOnlyOnError: true,
+				maximumItems: 120
+			}
+		},
+		{
+			module: "MMM-OpenMeteoAirQuality",
+			position: "top_right",
+			header: "Air Quality",
+			config: {
+				location: "Johnson Lane, NV",
+				latitude: 39.048,
+				longitude: -119.7221,
+				updateInterval: 30 * 60 * 1000,
+				showPollutants: true,
+				showUpdated: true
+			}
 		},
 		{
 			module: "MMM-Pollen",
 			position: "top_right",
 			header: "Pollen Forecast",
 			config: {
-				updateInterval: 3 * 60 * 60 * 1000, // every 3 hours
+				updateInterval: 3 * 60 * 60 * 1000,
 				zip_code: "89423"
-		}
+			}
 		},
 		{
 			module: "weather",
 			position: "top_right",
+			header: "Johnson Lane, NV",
 			config: {
-				weatherProvider: "weathergov",
+				weatherProvider: "openmeteo",
 				type: "current",
 				location: "Johnson Lane",
-				showHumidity: true,
+				appendLocationNameToHeader: false,
+				showHumidity: "wind",
 				lat: 39.048,
 				lon: -119.7221
-	}
-	},	
+			}
+		},
 		{
 			module: "weather",
 			position: "top_right",
@@ -167,45 +174,6 @@ let config = {
 				location: "Johnson Lane",
 				lat: 39.048,
 				lon: -119.7221
-			}
-		},
-		{
-			module: "MMM-OilPrice",
-			position: "bottom_right",
-			header: "Oil Price",
-			config: {
-				benchmark: "WTI",
-				updateInterval: 30 * 60 * 1000,
-				showChange: true,
-				showUpdated: true,
-				showObservationDate: true,
-				currencySymbol: "$",
-				showUnit: true,
-				unitText: "/bbl",
-				decimals: 2,
-				changeDecimals: 2
-			}
-		},
-		{
-			module: "MMM-IranWarCasualties",
-			position: "bottom_left",
-			header: "Iran War Casualties",
-			config: {
-				primarySourceUrl: "https://www.aljazeera.com/news/2026/3/1/us-israel-attacks-on-iran-death-toll-and-injuries-live-tracker",
-				secondarySourceUrl: "https://en.wikipedia.org/wiki/2026_Iran_war",
-				updateInterval: 10 * 60 * 1000,
-				enableCrossCheck: true,
-				mismatchAbsThreshold: 10,
-				mismatchPctThreshold: 15,
-				rowsPerPage: 4,
-				pageInterval: 8 * 1000,
-				showMismatch: true,
-				showUpdated: false,
-				showSourceLine: false,
-				showDisclaimer: false,
-				headerText: "Iran War Casualties",
-				staleAfterMs: null,
-				unavailableText: "Casualty data unavailable."
 			}
 		},
 		{
