@@ -181,6 +181,15 @@ let config = {
 			}
 		},
 		{
+			module: "MMM-CarsonCitySnow",
+			position: "top_right",
+			header: "Carson City Snow",
+			config: {
+				latitude: 39.1923,
+				longitude: -119.75
+			}
+		},
+		{
 			module: "newsfeed",
 			position: "bottom_bar",
 			config: {

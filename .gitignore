@@ -73,6 +73,8 @@ _incoming/
 !/modules/MMM-IranWarCasualties/**
 !/modules/MMM-RingLiveOverlay
 !/modules/MMM-RingLiveOverlay/**
+!/modules/MMM-CarsonCitySnow
+!/modules/MMM-CarsonCitySnow/**
 !/modules/README.md**
 
 # Ignore changes to the custom css files.
