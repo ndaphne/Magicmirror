@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ❤️ **Donate:** Enjoying MagicMirror²? [Please consider a donation!](https://magicmirror.builders/donate) With your help we can continue to improve the MagicMirror².
 
+## [Unreleased]
+
+### Added
+
+- Added a two-inch plow alert to `MMM-CarsonCitySnow`, with nearby snowfall reports, airport conditions, and Nevada 511 camera views.
+
 ## [2.18.0] - 2022-01-01
 
 Special thanks to the following contributors: @AmpioRosso, @eouia, @fewieden, @jupadin, @khassel, @kolbyjack, @KristjanESPERANTO, @MariusVaice, @rejas, @rico24 and @sdetweil.
