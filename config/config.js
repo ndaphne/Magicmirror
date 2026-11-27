@@ -186,7 +186,8 @@ let config = {
 			header: "Carson City Snow",
 			config: {
 				latitude: 39.1923,
-				longitude: -119.75
+				longitude: -119.75,
+				plowThresholdInches: 2
 			}
 		},
 		{
